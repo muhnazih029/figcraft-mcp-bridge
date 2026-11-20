@@ -18,12 +18,12 @@ LAUNCHER="$HOME/.local/bin/figcraft-gui"
 if [[ -f "$LAUNCHER" ]]; then
   if grep -q 'figcraft --control' "$LAUNCHER"; then
     rm -f "$LAUNCHER"
-    echo "dihapus: $LAUNCHER"
+    echo "removed: $LAUNCHER"
   else
-    echo "dilewati (bukan launcher figcraft-mcp): $LAUNCHER"
+    echo "skipped (not a figcraft-mcp launcher): $LAUNCHER"
   fi
 else
-  echo "tidak ada launcher: $LAUNCHER"
+  echo "no launcher found: $LAUNCHER"
 fi
 
 DESKTOP_DIR="$HOME/.local/share/applications"
@@ -31,23 +31,23 @@ DESKTOP="$DESKTOP_DIR/ai.storyteller.figcraft.desktop"
 if [[ -f "$DESKTOP" ]]; then
   if grep -Eq 'figcraft-gui|--control' "$DESKTOP"; then
     rm -f "$DESKTOP"
-    echo "dihapus: $DESKTOP"
+    echo "removed: $DESKTOP"
     if command -v update-desktop-database >/dev/null 2>&1; then
       update-desktop-database "$DESKTOP_DIR" >/dev/null 2>&1 || true
     fi
   else
-    echo "dilewati (bukan override figcraft-mcp): $DESKTOP"
+    echo "skipped (not a figcraft-mcp override): $DESKTOP"
   fi
 else
-  echo "tidak ada override .desktop: $DESKTOP"
+  echo "no .desktop override found: $DESKTOP"
 fi
 
 if [[ "$KEEP_CONFIG" -eq 1 ]]; then
-  echo "config dilewati (--keep-config)"
+  echo "configuration kept (--keep-config)"
 else
   for P in "$HOME/.config/opencode/opencode.json" "$HOME/.config/opencode/omcp.json"; do
     if [[ ! -f "$P" ]]; then
-      echo "tidak ada config: $P"
+      echo "no config found: $P"
       continue
     fi
     P="$P" bun -e '
@@ -66,11 +66,11 @@ else
         }
       }
       fs.writeFileSync(p, JSON.stringify(d, null, 2) + "\n");
-      console.log("dibersihkan:", p, "(backup:", `${p}.bak`, ")");
+      console.log("cleaned:", p, "(backup:", `${p}.bak`, ")");
     '
   done
 fi
 
 echo
-echo "Selesai. Folder source tidak dihapus — jalankan scripts/install.sh untuk pasang lagi."
-echo "Catatan: proses bridge yang sedang berjalan akan berhenti setelah OpenCode direstart."
+echo "Done. The source folder was kept; run scripts/install.sh to install again."
+echo "Note: any running bridge process will stop after OpenCode is restarted."

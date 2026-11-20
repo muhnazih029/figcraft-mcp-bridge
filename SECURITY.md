@@ -8,18 +8,18 @@
 
 ## Reporting a vulnerability
 
-Jangan buka issue publik untuk kerentanan. Kirim laporan lewat GitHub Security
-Advisory ("Report a vulnerability") pada repositori ini, sertakan:
+Do not open a public issue for security problems. Use GitHub Security Advisory
+("Report a vulnerability") on this repository and include:
 
-- versi bridge, Bun, FigCraft, dan OpenCode;
-- langkah reproducing;
-- dampak yang mungkin terjadi.
+- versions of the bridge, Bun, FigCraft and OpenCode;
+- steps to reproduce;
+- the potential impact.
 
-Laporan akan dibalas paling lambat 7 hari.
+Reports are answered within 7 days.
 
-## Catatan penting
+## Important note
 
-Control port FigCraft adalah TCP **loopback tanpa autentikasi**. Siapa pun yang bisa
-menjalankan proses sebagai user yang sama pada mesin itu dapat mengirim perintah
-desain (baca dokumen, ubah layer, export/save file). Jangan pernah meneruskan port
-tersebut ke jaringan, dan jangan menyimpan kredensial di environment bridge ini.
+The FigCraft control port is a loopback TCP socket **without authentication**.
+Any process running as the same user on the same machine can send design commands
+(read documents, edit layers, export/save files). Never forward this port to a
+network, and never put credentials in the bridge environment.

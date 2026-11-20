@@ -1,6 +1,6 @@
-## Deskripsi
+## Description
 
-<!-- Jelaskan perubahan dan alasannya. -->
+<!-- Describe the change and why it is needed. -->
 
 ## Related issue
 
@@ -8,7 +8,7 @@
 
 ## Checklist
 
-- [ ] `bun run typecheck` lulus
-- [ ] `bun run test` lulus
-- [ ] `bun run smoke` lulus
-- [ ] README diperbarui kalau perilaku atau environment variable berubah
+- [ ] `bun run typecheck` passes
+- [ ] `bun run test` passes
+- [ ] `bun run smoke` passes
+- [ ] `README.md` updated if behaviour or environment variables changed

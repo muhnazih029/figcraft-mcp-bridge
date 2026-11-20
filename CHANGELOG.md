@@ -1,20 +1,20 @@
 # Changelog
 
-Semua perubahan penting dicatat di sini. Format mengikuti
-[Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan proyek menggunakan
+All notable changes are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
 ## [0.1.0] - 2026-11-20
 
 ### Added
 
-- MCP server Bun/TypeScript (stdio) untuk FigCraft Desktop.
-- Auto-attach ke `figcraft-cli mcp --attach <port>` saat control port tersedia.
-- Auto-reconnect saat FigCraft ditutup lalu dibuka lagi.
-- Tool `figcraft_launch` untuk menyalakan FigCraft dari agent.
-- Tool `figcraft_status` dan `figcraft_commands` beserta diagnosa proses.
-- Deteksi port otomatis lewat `FIGCRAFT_PORT=auto`.
-- Forward 19 tool design FigCraft ke OpenCode.
-- Log file dengan rotasi otomatis.
-- Skrip `install.sh`, `uninstall.sh`, `doctor.sh`.
-- Unit test, smoke test, dan CI GitHub Actions.
+- Bun/TypeScript MCP server (stdio) for FigCraft Desktop.
+- Auto-attach to `figcraft-cli mcp --attach <port>` when the control port opens.
+- Auto-reconnect when FigCraft is closed and reopened.
+- `figcraft_launch` tool for starting FigCraft from the agent.
+- `figcraft_status` and `figcraft_commands` meta-tools with process diagnostics.
+- Automatic port detection via `FIGCRAFT_PORT=auto`.
+- Forwarding of all 19 FigCraft design tools to OpenCode.
+- Rotating log file.
+- `install.sh`, `uninstall.sh` and `doctor.sh` helper scripts.
+- Unit tests, smoke test and GitHub Actions CI.

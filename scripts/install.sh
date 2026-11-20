@@ -13,7 +13,7 @@ echo "repo: $REPO_DIR"
 echo "control port: $PORT"
 
 if ! command -v bun >/dev/null 2>&1; then
-  echo "ERROR: bun tidak ditemukan. Pasang dari https://bun.sh" >&2
+  echo "ERROR: bun not found. Install it from https://bun.sh" >&2
   exit 1
 fi
 
@@ -23,17 +23,17 @@ FIGCRAFT_BIN="$(command -v figcraft || true)"
 CLI_BIN="$(command -v figcraft-cli || true)"
 
 if [[ -z "$FIGCRAFT_BIN" ]]; then
-  echo "WARNING: 'figcraft' tidak ada di PATH. Set FIGCRAFT_APP_PATH di config OpenCode."
+  echo "WARNING: 'figcraft' is not on PATH. Set FIGCRAFT_APP_PATH in your OpenCode config."
 fi
 if [[ -z "$CLI_BIN" ]]; then
-  echo "WARNING: 'figcraft-cli' tidak ada di PATH. Set FIGCRAFT_CLI_PATH di config OpenCode."
+  echo "WARNING: 'figcraft-cli' is not on PATH. Set FIGCRAFT_CLI_PATH in your OpenCode config."
 fi
 
 mkdir -p "$HOME/.local/bin"
 LAUNCHER="$HOME/.local/bin/figcraft-gui"
 
 if [[ -e "$LAUNCHER" ]]; then
-  echo "launcher sudah ada, dilewati: $LAUNCHER"
+  echo "launcher already exists, skipping: $LAUNCHER"
 else
   cat > "$LAUNCHER" <<EOF
 #!/bin/sh
@@ -41,7 +41,7 @@ else
 exec "${FIGCRAFT_BIN:-/usr/bin/figcraft}" --control $PORT "\$@"
 EOF
   chmod +x "$LAUNCHER"
-  echo "dibuat: $LAUNCHER"
+  echo "created: $LAUNCHER"
 fi
 
 DESKTOP_DIR="$HOME/.local/share/applications"
@@ -49,7 +49,7 @@ mkdir -p "$DESKTOP_DIR"
 DESKTOP="$DESKTOP_DIR/ai.storyteller.figcraft.desktop"
 
 if [[ -f "$DESKTOP" ]] && grep -Eq '(--control|figcraft-gui)' "$DESKTOP"; then
-  echo ".desktop sudah memakai control port, dilewati: $DESKTOP"
+  echo "desktop entry already carries a control port, skipping: $DESKTOP"
 else
   cat > "$DESKTOP" <<EOF
 [Desktop Entry]
@@ -67,7 +67,7 @@ Categories=Graphics;2DGraphics;VectorGraphics;X-Design;
 Keywords=design;interface;ui;ux;prototype;wireframe;mockup;vector;layout;components;
 MimeType=application/x-figcraft;image/svg+xml;image/png;image/jpeg;application/x-sketch;x-scheme-handler/figcraft;
 EOF
-  echo "dibuat: $DESKTOP"
+  echo "created: $DESKTOP"
 fi
 
 if command -v update-desktop-database >/dev/null 2>&1; then
@@ -75,7 +75,7 @@ if command -v update-desktop-database >/dev/null 2>&1; then
 fi
 
 echo
-echo "== Tambahkan entry ini ke opencode.json (=mcp.servers) =="
+echo "== Add this entry under mcp.servers in opencode.json =="
 cat <<EOF
 "figcraft-mcp": {
   "type": "local",
@@ -85,4 +85,4 @@ cat <<EOF
 }
 EOF
 echo
-echo "Lalu restart OpenCode sekali. Cek dengan: ./scripts/doctor.sh"
+echo "Then restart OpenCode once. Verify with: ./scripts/doctor.sh"

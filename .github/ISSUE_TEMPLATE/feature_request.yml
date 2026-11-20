@@ -1,23 +1,23 @@
 name: Feature request
-description: Usulkan peningkatan pada bridge
+description: Suggest an improvement to the bridge
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: Masalah yang ingin diselesaikan
+      label: Problem to solve
     validations:
       required: true
   - type: textarea
     id: solution
     attributes:
-      label: Solusi yang diusulkan
+      label: Proposed solution
     validations:
       required: true
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatif yang sudah dipertimbangkan
+      label: Alternatives considered
     validations:
       required: false

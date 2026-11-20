@@ -1,48 +1,48 @@
 name: Bug report
-description: Laporkan masalah pada bridge atau tool FigCraft
+description: Report a problem with the bridge or the FigCraft tools
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Terima kasih sudah melaporkan. Isi sesuai kondisi saat error terjadi.
+        Thanks for reporting. Please fill this in with the state at the time of the error.
   - type: textarea
     id: what-happened
     attributes:
-      label: Apa yang terjadi?
-      description: Jelaskan perilaku yang kamu lihat.
+      label: What happened?
+      description: Describe the behaviour you observed.
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: Yang diharapkan
+      label: Expected behaviour
     validations:
       required: true
   - type: textarea
     id: reproduce
     attributes:
-      label: Langkah reproducing
-      description: Sertakan status dari `figcraft_status` dan 10 baris terakhir log.
+      label: Steps to reproduce
+      description: Include the output of `figcraft_status` and the last 10 log lines.
       render: shell
     validations:
       required: true
   - type: input
     id: versions
     attributes:
-      label: Versi
-      description: "Contoh: Bun 1.4.2, FigCraft 0.18.1, OpenCode 1.x"
+      label: Versions
+      description: "For example: Bun 1.4.2, FigCraft 0.18.1, OpenCode 1.x"
     validations:
       required: true
   - type: dropdown
     id: os
     attributes:
-      label: Sistem operasi
+      label: Operating system
       options:
         - Linux
         - macOS
         - Windows
-        - Lainnya
+        - Other
     validations:
       required: true

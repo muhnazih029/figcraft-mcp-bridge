@@ -1,75 +1,58 @@
 # figcraft-mcp-bridge
 
-Bridge MCP berbasis **Bun + TypeScript** yang menghubungkan [OpenCode](https://opencode.ai)
-ke **FigCraft Desktop** lewat `figcraft-cli mcp --attach <port>`. Nama tool/MCP-server-nya
-adalah `figcraft-mcp`; nama repositori ini sengaja dibedakan supaya tidak tertukar dengan
-proyek pihak ketiga yang bernama sama.
+A **Bun + TypeScript** MCP bridge that connects [OpenCode](https://opencode.ai) to
+**FigCraft Desktop** through `figcraft-cli mcp --attach <port>`. The MCP server key is
+`figcraft-mcp`; this repository is deliberately named differently so it cannot be
+confused with the unrelated third-party project of the same name.
 
-Bridge ini **long-running**: bisa hidup walaupun FigCraft belum dibuka, lalu attach otomatis
-begitu control port tersedia. Agent bisa menyalakan FigCraft sendiri lewat tool
-`figcraft_launch`, jadi alur desain tidak perlu restart OpenCode.
+The bridge is **long-running**: it can stay alive while FigCraft is closed and attach
+automatically as soon as the control port opens. An agent can even start FigCraft itself
+with the `figcraft_launch` tool, so designing never requires restarting OpenCode.
 
 [![CI](https://github.com/muhnazih029/figcraft-mcp-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/muhnazih029/figcraft-mcp-bridge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?logo=bun)](https://bun.sh)
 [![MCP](https://img.shields.io/badge/protocol-MCP-blue)](https://modelcontextprotocol.io)
 
-## Daftar isi
+## Table of contents
 
-- [Fitur](#fitur)
+- [Features](#features)
 - [Requirements](#requirements)
 - [Quickstart](#quickstart)
-- [Arsitektur & alur status](#arsitektur--alur-status)
+- [Architecture and status flow](#architecture-and-status-flow)
 - [Tools](#tools)
-- [Perilaku status](#perilaku-status-kenapa-tidak-jadi-connecting)
-- [Diagnosa](#diagnosa)
-- [Log](#log)
-- [Konfigurasi](#konfigurasi)
-- [Contoh prompt](#contoh-prompt)
-- [Skrip bantu](#skrip-bantu)
-- [Mencoba sendiri](#mencoba-sendiri)
+- [Status behaviour (why it does not become "connecting")](#status-behaviour-why-it-does-not-become-connecting)
+- [Diagnostics](#diagnostics)
+- [Logging](#logging)
+- [Configuration](#configuration)
+- [Example prompts](#example-prompts)
+- [Helper scripts](#helper-scripts)
+- [Try it yourself](#try-it-yourself)
 - [Development](#development)
-- [Keamanan](#keamanan)
+- [License](#license)
+- [Security](#security)
 
-## Arsitektur & alur status
+## Features
 
-```mermaid
-flowchart LR
-    OC[OpenCode] -->|stdio JSON-RPC| BR[figcraft-mcp bridge]
-    BR -->|probe TCP| P{control port}
-    P -- tutup --> W[waiting_for_app]
-    P -- terbuka --> A[attaching]
-    A --> CLI[figcraft-cli mcp --attach]
-    CLI --> APP[FigCraft Desktop]
-    A --> C[connected + 19 tool]
-    C -->|tools/list_changed| OC
-    W -->|figcraft_launch| APP
-```
-
-Bridge mempertahankan prosesnya sendiri, sehingga FigCraft bisa ditutup/dibuka
-berkali-kali tanpa me-restart OpenCode.
-
-## Fitur
-
-- Auto-attach ke FigCraft saat control port terbuka (~1,5 detik).
-- Auto-reconnect saat FigCraft ditutup lalu dibuka lagi.
-- **`figcraft_launch`** — agent bisa menyalakan FigCraft dengan control port sendiri.
-- **`figcraft_status`** — state, port, proses FigCraft, diagnosa, error, jumlah retry.
-- **`figcraft_commands`** — daftar tool design, atau diagnosa saat belum terhubung.
-- Port auto-detect dari `--control` di proses FigCraft (`FIGCRAFT_PORT=auto`).
-- 19 tool design FigCraft diteruskan apa adanya (`create_node`, `batch`, `screenshot`, dst.).
-- `tools/list_changed` dikirim ke OpenCode, jadi tool muncul/hilang tanpa restart.
-- Log file dengan rotasi otomatis.
+- Auto-attach to FigCraft when its control port opens (~1.5 s).
+- Auto-reconnect when FigCraft is closed and reopened.
+- **`figcraft_launch`** — the agent can start FigCraft with its control port itself.
+- **`figcraft_status`** — state, port, FigCraft processes, diagnostics, errors, retry count.
+- **`figcraft_commands`** — design tool list, or diagnostics when not connected.
+- Port auto-detection from the running process' `--control` flag (`FIGCRAFT_PORT=auto`).
+- All 19 FigCraft design tools are forwarded as-is (`create_node`, `batch`, `screenshot`, ...).
+- `tools/list_changed` is sent to OpenCode, so tools appear/disappear without a restart.
+- Rotating log file.
 
 ## Requirements
 
-| Kebutuhan | Catatan |
+| Requirement | Notes |
 |---|---|
-| [Bun](https://bun.sh) | untuk menjalankan server MCP |
-| FigCraft Desktop ≥ 0.18.1 | harus punya `figcraft-cli` dengan subcommand `mcp --attach` |
-| OpenCode | dengan dukungan MCP lokal (stdio) |
+| [Bun](https://bun.sh) | runs the MCP server |
+| FigCraft Desktop >= 0.18.1 | must ship `figcraft-cli` with the `mcp --attach` subcommand |
+| OpenCode | with local (stdio) MCP support |
 
-Cek cepat:
+Quick check:
 
 ```bash
 bun --version
@@ -77,12 +60,12 @@ figcraft --version
 figcraft-cli mcp --help | head
 ```
 
-Kalau `figcraft-cli` tidak ada di PATH, set `FIGCRAFT_CLI_PATH` ke path absolutnya
-(mis. path di dalam AppImage).
+If `figcraft-cli` is not on `PATH`, set `FIGCRAFT_CLI_PATH` to its absolute path
+(for example the path inside an AppImage).
 
 ## Quickstart
 
-### 1. Clone & install
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/muhnazih029/figcraft-mcp-bridge.git
@@ -91,9 +74,9 @@ bun install
 bunx tsc --noEmit
 ```
 
-### 2. Daftarkan MCP ke OpenCode
+### 2. Register the MCP server in OpenCode
 
-Tambahkan ke `~/.config/opencode/opencode.json` (atau config OpenCode kamu):
+Add this to `~/.config/opencode/opencode.json` (or your OpenCode config):
 
 ```json
 {
@@ -101,11 +84,7 @@ Tambahkan ke `~/.config/opencode/opencode.json` (atau config OpenCode kamu):
     "servers": {
       "figcraft-mcp": {
         "type": "local",
-        "command": [
-          "bun",
-          "run",
-          "/PATH_ABSOLUT/KE/figcraft-mcp/src/index.ts"
-        ],
+        "command": ["bun", "run", "/ABSOLUTE/PATH/TO/figcraft-mcp-bridge/src/index.ts"],
         "environment": { "FIGCRAFT_PORT": "auto" },
         "enabled": true
       }
@@ -114,98 +93,118 @@ Tambahkan ke `~/.config/opencode/opencode.json` (atau config OpenCode kamu):
 }
 ```
 
-Ganti `/PATH_ABSOLUT/KE/...` dengan hasil `pwd` di langkah 1. Restart OpenCode
-sekali setelah menambahkan entry ini.
+Replace `/ABSOLUTE/PATH/TO/...` with the output of `pwd` from step 1. Restart OpenCode
+once after adding this entry.
 
-### 3. Pastikan FigCraft bisa dibuka dengan control port
+An example file is available at [`examples/opencode.json`](examples/opencode.json).
 
-FigCraft harus diluncurkan dengan `--control <port>`. Cara paling aman:
+### 3. Make sure FigCraft can start with a control port
+
+FigCraft must be launched with `--control <port>`. The safest way:
 
 ```bash
-./scripts/install.sh          # pasang launcher + override .desktop
+./scripts/install.sh          # installs the launcher and the .desktop override
 ```
 
-Atau manual — ubah entry `.desktop` FigCraft menjadi:
+Or edit the FigCraft `.desktop` entry manually:
 
 ```ini
-Exec=/path/ke/figcraft --control 7979 %U
+Exec=/path/to/figcraft --control 7979 %U
 ```
 
-Lalu `update-desktop-database ~/.local/share/applications`.
+Then run `update-desktop-database ~/.local/share/applications`.
 
-### 4. Pakai
+### 4. Use it
 
-Buka OpenCode, lalu minta agent mendesain. Kalau FigCraft belum jalan, agent
-memanggil `figcraft_launch`; aplikasi menyala, bridge attach, tool design muncul.
+Open OpenCode and ask for a design. If FigCraft is not running, the agent calls
+`figcraft_launch`; the app starts, the bridge attaches, and the design tools appear.
 
-Atau buka FigCraft dari launcher/DMS — bridge tetap akan attach otomatis.
+Alternatively, open FigCraft from your launcher/DMS — the bridge will attach either way.
+
+## Architecture and status flow
+
+```mermaid
+flowchart LR
+    OC[OpenCode] -->|stdio JSON-RPC| BR[figcraft-mcp bridge]
+    BR -->|TCP probe| P{control port}
+    P -- closed --> W[waiting_for_app]
+    P -- open --> A[attaching]
+    A --> CLI[figcraft-cli mcp --attach]
+    CLI --> APP[FigCraft Desktop]
+    A --> C[connected + 19 tools]
+    C -->|tools/list_changed| OC
+    W -->|figcraft_launch| APP
+```
+
+The bridge keeps its own process alive, so FigCraft can be closed and reopened any
+number of times without restarting OpenCode.
 
 ## Tools
 
-| Tool | Fungsi |
+| Tool | Purpose |
 |---|---|
-| `figcraft_status` | Status koneksi lengkap + diagnosa |
-| `figcraft_commands` | Daftar tool design / hint saat belum connect |
-| `figcraft_launch({ waitMs? })` | Nyalakan FigCraft + attach |
-| 19 tool design | Diteruskan dari `figcraft-cli mcp --attach` saat `connected` |
+| `figcraft_status` | Full connection status plus diagnostics |
+| `figcraft_commands` | Design tool list, or hints when not connected |
+| `figcraft_launch({ waitMs? })` | Start/reuse FigCraft and attach |
+| 19 design tools | Forwarded from `figcraft-cli mcp --attach` while `connected` |
 
-Tool design meliputi `list_commands`, `run_command`, `batch`, `create_node`,
+The design tools are `list_commands`, `run_command`, `batch`, `create_node`,
 `set_properties`, `inspect_document`, `get_node`, `select`, `export`, `screenshot`,
 `open_file`, `save_file`, `undo`, `redo`, `pointer`, `key`, `type_text`,
-`inspect_ui`, `wait_for_changes`.
+`inspect_ui`, and `wait_for_changes`.
 
-## Perilaku status (kenapa tidak jadi "connecting")
+## Status behaviour (why it does not become "connecting")
 
-OpenCode hanya punya dua status untuk MCP lokal: **connected** dan **failed**.
-Status `failed` terjadi kalau **proses MCP mati**, dan OpenCode **tidak** me-restart
-proses lokal yang mati.
+OpenCode only has two states for a local MCP server: **connected** and **failed**.
+A server is marked `failed` when its process exits, and OpenCode **never restarts**
+local processes that died (`packages/core/src/mcp/index.ts`, `stdio.ts`).
 
-Pencil terlihat "berubah jadi error" karena biner MCP-nya berada di dalam mount
-AppImage yang hilang saat aplikasinya ditutup — jadi proses MCP ikut mati. Saat
-aplikasi dibuka, OpenCode perlu reload/restart untuk bisa spawn ulang.
+Pencil appears to "turn into an error and then connect" because its MCP binary lives
+inside the AppImage mount; when the app closes, the mount disappears, the MCP process
+dies, and OpenCode marks it failed. Opening the app again makes the binary reappear,
+but a reload/restart is still normally required to spawn it again.
 
-Bridge ini sengaja melakukan sebaliknya: proses tetap hidup saat FigCraft mati,
-tool design dicabut lewat `notifications/tools/list_changed`, dan `figcraft_status`
-menjadi pusat diagnosa. Hasilnya: FigCraft bisa dibuka/tutup berkali-kali tanpa
-restart OpenCode. Kalau menginginkan perilaku fail-fast seperti Pencil, jalankan
-dengan varian konfigurasi yang menghentikan bridge saat app mati — tapi konsekuensinya
-OpenCode harus direstart setelah FigCraft dibuka kembali.
+This bridge deliberately does the opposite: it stays alive when FigCraft closes,
+removes the design tools via `notifications/tools/list_changed`, and exposes
+`figcraft_status` as the diagnostic centre. The result is that you can open and close
+FigCraft repeatedly without restarting OpenCode. A fail-fast mode like Pencil's is
+possible, but then reopening FigCraft would require an OpenCode restart.
 
-## Diagnosa
+## Diagnostics
 
-Saat port tertutup, bridge membaca `/proc/<pid>/cmdline` untuk membedakan:
+When the port is closed, the bridge reads `/proc/<pid>/cmdline` to distinguish three cases:
 
-| Kondisi | Field `diagnostic` |
+| Condition | `diagnostic` field |
 |---|---|
-| FigCraft jalan tanpa `--control` | `FigCraft is running without a control port (pid N)` |
-| FigCraft jalan di port lain | `FigCraft is running on control port X, but this bridge expects Y` |
-| Tidak ada proses FigCraft | kosong |
+| FigCraft running without `--control` | `FigCraft is running without a control port (pid N)` |
+| FigCraft running on another port | `FigCraft is running on control port X, but this bridge expects Y` |
+| No FigCraft process | empty |
 
-Dengan `FIGCRAFT_PORT=auto`, port dari proses diadopsi otomatis.
+With `FIGCRAFT_PORT=auto`, the port of a running process is adopted automatically.
 
-## Log
+## Logging
 
 ```bash
 tail -f ~/.local/share/figcraft-mcp/bridge.log
 ```
 
-Rotasi otomatis ke `bridge.log.1` saat ukuran melewati `FIGCRAFT_LOG_MAX_BYTES`.
+The log rotates to `bridge.log.1` when it exceeds `FIGCRAFT_LOG_MAX_BYTES`.
 
-## Konfigurasi
+## Configuration
 
-| Variable | Default | Catatan |
+| Variable | Default | Notes |
 |---|---|---|
-| `FIGCRAFT_HOST` | `127.0.0.1` | control server harus bind loopback |
-| `FIGCRAFT_PORT` | `7979` | `auto` = ikuti `--control` proses FigCraft |
-| `FIGCRAFT_CLI_PATH` | `/usr/bin/figcraft-cli` | path absolut juga boleh |
-| `FIGCRAFT_APP_PATH` | `/usr/bin/figcraft` | dipakai `figcraft_launch` |
+| `FIGCRAFT_HOST` | `127.0.0.1` | the control server must bind to loopback |
+| `FIGCRAFT_PORT` | `7979` | use `auto` to follow the process' `--control` flag |
+| `FIGCRAFT_CLI_PATH` | `/usr/bin/figcraft-cli` | absolute paths are allowed |
+| `FIGCRAFT_APP_PATH` | `/usr/bin/figcraft` | used by `figcraft_launch` |
 | `FIGCRAFT_POLL_INTERVAL_MS` | `1500` | |
 | `FIGCRAFT_ATTACH_TIMEOUT_MS` | `5000` | |
 | `FIGCRAFT_LAUNCH_TIMEOUT_MS` | `20000` | |
-| `FIGCRAFT_LOG_FILE` | `~/.local/share/figcraft-mcp/bridge.log` | `none` = matikan |
-| `FIGCRAFT_LOG_MAX_BYTES` | `1000000` | sebelum rotasi |
+| `FIGCRAFT_LOG_FILE` | `~/.local/share/figcraft-mcp/bridge.log` | `none` disables it |
+| `FIGCRAFT_LOG_MAX_BYTES` | `1000000` | before rotating to `.1` |
 
-Contoh memakai paths non-standar:
+Example with non-standard paths:
 
 ```json
 "environment": {
@@ -215,105 +214,93 @@ Contoh memakai paths non-standar:
 }
 ```
 
-## Contoh prompt
-
-Beberapa prompt yang langsung bisa dipakai setelah MCP terpasang:
+## Example prompts
 
 ```text
-Cek status FigCraft dulu. Kalau belum nyambung, buka aplikasinya lalu buat
-kartu profil 340x440 dengan avatar ungu, nama "Nazih", role "Design Engineer",
-dan tombol CTA hitam bertuliskan "Let's collaborate →".
+Check the FigCraft status first. If it is not connected, open the app, then create a
+340x440 profile card with a purple avatar, the name "Nazih", the role "Design Engineer",
+and a black CTA button labelled "Let's collaborate →".
 ```
 
 ```text
-Inspect dokumen yang sedang terbuka, lalu tambahkan frame baru di sebelah kanan
-berisi tiga kartu fitur dengan auto-layout vertikal, gap 16, padding 24.
-Jangan ubah frame portfolio yang sudah ada.
+Inspect the open document, then add a new frame to the right containing three feature
+cards with vertical auto-layout, gap 16 and padding 24. Do not touch the existing
+portfolio frame.
 ```
 
 ```text
-Baca daftar command FigCraft yang tersedia, lalu jelaskan mana saja yang bisa
-dipakai untuk membuat component dan variable. Belum perlu mengubah dokumen.
+List the available FigCraft commands and explain which ones create components and
+variables. Do not modify the document yet.
 ```
 
-Tips: minta agent memanggil `figcraft_status` sebelum mendesain supaya
-keadaan koneksi dan dokumen jelas.
+Tip: ask the agent to call `figcraft_status` before designing so the connection and
+document state are clear.
 
-## Skrip bantu
+## Helper scripts
 
 ```bash
-./scripts/install.sh              # cek dependency, pasang launcher + .desktop, cetak snippet config
-./scripts/uninstall.sh            # hapus launcher + .desktop + entry config (backup .bak)
-./scripts/uninstall.sh --keep-config   # hapus file saja, config dipertahankan
-./scripts/doctor.sh               # cek biner, port, entry .desktop, dan log terakhir
+./scripts/install.sh                   # check deps, install launcher + .desktop, print config
+./scripts/uninstall.sh                 # remove launcher + .desktop + MCP entry (with .bak backups)
+./scripts/uninstall.sh --keep-config   # remove files only, keep configuration
+./scripts/doctor.sh                    # check binaries, port, .desktop entry and recent log
 ```
 
-## Mencoba sendiri
+## Try it yourself
 
-1. **Cek dulu lingkungan:**
+1. **Check the environment:**
    ```bash
    ./scripts/doctor.sh
    ```
-   Harus muncul `OK figcraft`, `OK figcraft-cli`, `OK pid ... --control 7979`,
-   dan `OK port 7979 bisa dihubungkan`.
+   You should see `OK figcraft`, `OK figcraft-cli`, `OK pid ... --control 7979`,
+   and `OK port 7979 is reachable`.
 
-2. **Pantau log di terminal terpisah:**
+2. **Watch the log in another terminal:**
    ```bash
    tail -f ~/.local/share/figcraft-mcp/bridge.log
    ```
 
-3. **Di OpenCode, cek status:**
-   panggil `figcraft_status` → `state: connected`, 19 tool di `backendToolNames`.
+3. **In OpenCode, call `figcraft_status`** — expect `state: connected` and 19 tools
+   in `backendToolNames`.
 
-4. **Tutup FigCraft.** Log akan menulis:
+4. **Close FigCraft.** The log writes:
    `state connected -> waiting_for_app (FigCraft Desktop control port closed)`.
-   Tool design hilang dari OpenCode, tapi MCP tidak error.
+   The design tools disappear, but MCP does not error.
 
-5. **Buka lagi dengan dua cara (pilih salah satu):**
-   - dari chat: panggil `figcraft_launch` → aplikasi menyala sendiri, attach ~1,5 detik;
-   - dari DMS/launcher: klik FigCraft seperti biasa (entry `.desktop` sudah
-     membawa `--control`).
+5. **Reopen it in either of two ways:**
+   - from chat: call `figcraft_launch` — the app starts and attaches in ~1.5 s;
+   - from your DMS/launcher: click FigCraft as usual (the `.desktop` entry carries
+     `--control`).
 
-6. **Verifikasi:** `figcraft_status` → `connected`, dan log:
+6. **Verify:** `figcraft_status` returns `connected`, and the log shows
    `state waiting_for_app -> attaching -> connected (19 tools)`.
 
-7. **Uji uninstall/pasang ulang** kalau perlu:
+7. **Optionally test uninstall/reinstall:**
    ```bash
    ./scripts/uninstall.sh
    ./scripts/install.sh
    ```
-   Lalu restart OpenCode sekali.
-
-## Troubleshooting
-
-| Gejala | Penyebab | Solusi |
-|---|---|---|
-| `figcraft_status` → `waiting_for_app`, `appProcesses` kosong | FigCraft belum jalan | Panggil `figcraft_launch` atau buka dari DMS |
-| `diagnostic`: app jalan tanpa control port | `.desktop` belum pakai `--control` | Jalankan `scripts/install.sh` |
-| `diagnostic`: port mismatch | launcher pakai port lain | Pakai `FIGCRAFT_PORT=auto` |
-| MCP tidak muncul di OpenCode | entry belum ada / OpenCode belum reload | Tambahkan entry, restart OpenCode |
-| Tool design tidak muncul | bridge belum attach | Cek `figcraft_status`, lalu `figcraft_launch` |
+   Restart OpenCode once, then repeat steps 3-6.
 
 ## Development
 
-Lihat [`CONTRIBUTING.md`](CONTRIBUTING.md). Ringkas:
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). In short:
 
 ```bash
 bun install
 bun run typecheck
 bun run test
-bun run smoke     # tidak butuh FigCraft terpasang
+bun run smoke     # works without FigCraft installed
 ```
 
-CI GitHub Actions menjalankan keempatnya pada setiap push/PR.
+GitHub Actions CI runs all four checks on every push and pull request.
 
 ## License
 
-MIT — lihat [`LICENSE`](LICENSE).
+MIT — see [`LICENSE`](LICENSE).
 
-## Keamanan
+## Security
 
-Control port FigCraft adalah TCP **loopback** (`127.0.0.1`) **tanpa token**.
-Hanya proses di mesin yang sama yang bisa terhubung, tetapi proses itu bisa
-mengirim perintah desain (baca dokumen, ubah layer, export/save). Jangan pernah
-meneruskan port ini ke jaringan.
+The FigCraft control port is a **loopback TCP socket with no authentication**.
+Any process running as the same user on the same machine can connect and send design
+commands (read documents, edit layers, export/save files). Never forward this port
+to a network.

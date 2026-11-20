@@ -1,0 +1,29 @@
+{
+  "name": "figcraft-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Long-running Bun MCP bridge to FigCraft Desktop via figcraft-cli mcp --attach",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muhnazih029/figcraft-mcp-bridge.git"
+  },
+  "homepage": "https://github.com/muhnazih029/figcraft-mcp-bridge#readme",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "smoke": "bun scripts/smoke.ts",
+    "doctor": "bash scripts/doctor.sh"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "figcraft-mcp": {
+        "type": "local",
+        "command": ["bun", "run", "/absolute/path/to/figcraft-mcp/src/index.ts"],
+        "environment": {
+          "FIGCRAFT_PORT": "auto"
+        },
+        "enabled": true
+      }
+    }
+  }
+}
